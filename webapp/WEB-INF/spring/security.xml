@@ -1,0 +1,73 @@
+
+<!-- Con esta configuración: Será requerida autenticación para algunas 
+	URLs. Por defecto, Spring generará un formulario HTML de login de forma automática. Se 
+	crearán 2 usuarios en memoria con los roles especificados. Se agregará CSRF 
+	attack prevention (Cross-site request forgery). -->
+
+<b:beans xmlns="http://www.springframework.org/schema/security"
+	xmlns:b="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+     http://www.springframework.org/schema/beans/spring-beans.xsd
+     http://www.springframework.org/schema/security 
+     http://www.springframework.org/schema/security/spring-security.xsd">
+
+
+	<!-- Se especifican las urls (patrones) que seran interceptadas y protegidas, 
+		y se especifica el acceso requerido para cada url (rol) -->
+
+	<http auto-config="true">
+		<!-- Declaramos todos los recursos que estaran protegidos -->
+		<intercept-url pattern="/peliculas/*"
+			access="hasAnyAuthority('EDITOR','GERENTE')" />
+		<intercept-url pattern="/horarios/*"
+			access="hasAnyAuthority('EDITOR','GERENTE')" />
+		<intercept-url pattern="/noticias/*"
+			access="hasAnyAuthority('EDITOR','GERENTE')" />
+		<intercept-url pattern="/banners/*"
+			access="hasAnyAuthority('GERENTE')" />
+		<intercept-url pattern="/usuarios/*"
+			access="hasAnyAuthority('GERENTE')" />
+		<intercept-url pattern="/admin/*"
+			access="hasAnyAuthority('EDITOR','GERENTE')" />
+
+		<!-- configurar la ruta del formulario de login -->
+		<!-- default-target-url es el url destino despues de hacer el login -->
+		<form-login login-page="/login"
+			default-target-url="/admin/index" />
+	</http>
+
+	<b:bean id="passwordEncoder"
+		class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder" />
+
+	<authentication-manager>
+		<authentication-provider>
+			<!-- Declaracion de usuarios en memoria 
+			
+			<user-service> 
+			<user name="luis" password="{noop}luis123" authorities="EDITOR" /> 
+				<user name="marisol" password="{noop}mari123" authorities="GERENTE" /> 
+				</user-service> -->
+
+			<!-- Los usuarios y roles se van a recuperar de una bd -->
+			<!-- se hace referencia al bean declarado como dataSource configurado 
+				en el root-context.xml, para la conexion a MySQL -->
+
+			<!-- Autenticacion desde la bd por defecto (users, authorities) 
+			<jdbc-user-service data-source-ref="dataSource" /> -->
+
+			<!-- Autenticacion desde la bd personalizada (usuarios, usuarioperfil) -->
+
+			<!-- se encripta la contraseña, usando el bean passwordEncoder, mediante 
+				bcrypt -->
+			<password-encoder ref="passwordEncoder" />
+
+			<!-- Solo se seleccionan los campos username, password, activo y perfil -->
+			<jdbc-user-service data-source-ref="dataSource"
+				users-by-username-query="SELECT username, password, activo FROM usuarios WHERE username = ?"
+				authorities-by-username-query="SELECT username, perfil FROM perfiles WHERE username = ?" />
+
+		</authentication-provider>
+	</authentication-manager>
+
+</b:beans>
